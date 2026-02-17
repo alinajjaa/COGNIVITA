@@ -3,6 +3,8 @@ package com.alzheimer.backend.medical;
 import com.alzheimer.backend.user.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "medical_records")
@@ -12,10 +14,12 @@ public class MedicalRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // User relationship
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // Basic Medical Info
     @Column(name = "age")
     private Integer age;
 
@@ -39,6 +43,7 @@ public class MedicalRecord {
     @Column(name = "diagnosis_notes", columnDefinition = "TEXT")
     private String diagnosisNotes;
 
+    // Timestamps
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -49,6 +54,27 @@ public class MedicalRecord {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    // Risk Assessment Fields
+    @Column(name = "risk_score")
+    private Double riskScore = 0.0;
+
+    @Column(name = "risk_level", length = 50)
+    @Enumerated(EnumType.STRING)
+    private RiskLevel riskLevel = RiskLevel.LOW;
+
+    @Column(name = "last_risk_calculation")
+    private LocalDateTime lastRiskCalculation;
+
+    // Relationships
+    @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RiskFactor> riskFactorsList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PreventionAction> preventionActions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MedicalTimeline> timeline = new ArrayList<>();
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -83,4 +109,28 @@ public class MedicalRecord {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Double getRiskScore() { return riskScore; }
+    public void setRiskScore(Double riskScore) { this.riskScore = riskScore; }
+
+    public RiskLevel getRiskLevel() { return riskLevel; }
+    public void setRiskLevel(RiskLevel riskLevel) { this.riskLevel = riskLevel; }
+
+    public LocalDateTime getLastRiskCalculation() { return lastRiskCalculation; }
+    public void setLastRiskCalculation(LocalDateTime lastRiskCalculation) {
+        this.lastRiskCalculation = lastRiskCalculation;
+    }
+
+    public List<RiskFactor> getRiskFactorsList() { return riskFactorsList; }
+    public void setRiskFactorsList(List<RiskFactor> riskFactorsList) {
+        this.riskFactorsList = riskFactorsList;
+    }
+
+    public List<PreventionAction> getPreventionActions() { return preventionActions; }
+    public void setPreventionActions(List<PreventionAction> preventionActions) {
+        this.preventionActions = preventionActions;
+    }
+
+    public List<MedicalTimeline> getTimeline() { return timeline; }
+    public void setTimeline(List<MedicalTimeline> timeline) { this.timeline = timeline; }
 }
