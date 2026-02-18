@@ -1,0 +1,155 @@
+<div class="rdv-container">
+  <h2>Réserver un rendez-vous</h2>
+
+
+  <!--  Toast Notifications -->
+  <div class="toast-area" aria-live="polite" aria-atomic="true">
+    <div
+      class="toast"
+      *ngFor="let t of toasts"
+      [ngClass]="['toast-' + t.type, t.closing ? 'closing' : '']"
+    >
+      <div class="toast-icon">
+        <span *ngIf="t.type === 'success'">yes</span>
+        <span *ngIf="t.type === 'error'">❌</span>
+        <span *ngIf="t.type === 'info'">ℹ️</span>
+        <span *ngIf="t.type === 'warn'">⚠️</span>
+      </div>
+
+      <div class="toast-body">
+        <div class="toast-title">{{ t.title }}</div>
+        <div class="toast-msg">{{ t.message }}</div>
+
+        <div class="toast-progress" *ngIf="t.durationMs && t.durationMs > 0">
+          <div class="toast-bar" [style.animationDuration.ms]="t.durationMs"></div>
+        </div>
+      </div>
+
+      <button class="toast-close" (click)="dismissToast(t.id)" aria-label="Close">
+        ✕
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Medecin options dropdown -->
+  <div class="field">
+    <label>Médecin</label>
+    <select [(ngModel)]="medecinId">
+      <option [ngValue]="null" disabled>-- Choisir un médecin --</option>
+      <option *ngFor="let m of medecinOptions" [ngValue]="m.id">
+        {{ m.nomMedecin }}
+      </option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Date & Heure</label>
+    <input
+      type="datetime-local"
+      [(ngModel)]="dateHeure"
+      [min]="minDateTime"
+    />
+  </div>
+
+  <button (click)="reserver()" [disabled]="loading">
+    {{ loading ? 'Réservation...' : 'Réserver' }}
+  </button>
+</div>
+
+<hr class="divider" />
+
+<h3 class="section-title">Mes Rendez-vous</h3>
+
+<div class="table-card">
+
+  <!-- ✅ Search only -->
+  <div class="table-controls" *ngIf="filteredRendezvous.length > 0">
+    <div class="search-box">
+      <label>Recherche</label>
+      <input
+        type="text"
+        placeholder="Date, médecin, statut..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilters()"
+      />
+    </div>
+  </div>
+
+  <!-- ✅ Table scroll area -->
+  <div class="table-scroll" *ngIf="filteredRendezvous.length > 0">
+    <table class="rdv-table">
+      <thead>
+      <tr>
+        <th (click)="sortByDate()" class="sortable">
+          Date <span class="arrow">{{ sortAscending ? '↑' : '↓' }}</span>
+        </th>
+        <th>Médecin</th>
+        <th>Status</th>
+        <th class="actions-col">Action</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let rdv of pagedRendezvous">
+        <td>{{ rdv.dateHeure | date:'short' }}</td>
+
+        <td>
+          {{ getMedecinName(rdv.medecin?.id) || ('#' + (rdv.medecin?.id ?? '')) }}
+        </td>
+
+        <td>
+            <span
+              class="status-pill"
+              [ngClass]="'st-' + (rdv.status || '').toLowerCase()"
+            >
+              {{ rdv.status }}
+            </span>
+        </td>
+
+        <td class="actions-col">
+          <button
+            class="btn-danger"
+            *ngIf="rdv.status === 'PLANIFIE'"
+            (click)="annulerRendezVous(rdv.id)"
+          >
+            Annuler
+          </button>
+          <span *ngIf="rdv.status !== 'PLANIFIE'">—</span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ✅ Pagination OUTSIDE scroll -->
+  <div class="pagination" *ngIf="filteredRendezvous.length > 0">
+    <div class="page-size">
+      <label>Rows:</label>
+      <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+        <option [ngValue]="5">5</option>
+        <option [ngValue]="8">8</option>
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="20">20</option>
+      </select>
+    </div>
+
+    <div class="page-controls">
+      <button class="btn-light" (click)="prevPage()" [disabled]="currentPage === 1">
+        ◀
+      </button>
+
+      <span class="page-info">
+        Page {{ currentPage }} / {{ totalPages }}
+      </span>
+
+      <button class="btn-light" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        ▶
+      </button>
+    </div>
+  </div>
+
+  <div class="empty" *ngIf="filteredRendezvous.length === 0">
+    Aucun rendez-vous trouvé.
+  </div>
+</div>

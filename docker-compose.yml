@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: alzheimer_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: alzheimer_db
+      MYSQL_USER: alzheimer_user
+      MYSQL_PASSWORD: alzheimer_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./setup_database.sql:/docker-entrypoint-initdb.d/setup_database.sql
+    networks:
+      - alzheimer_network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: alzheimer_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root123
+      PMA_DATABASE: alzheimer_db
+    ports:
+      - "8888:80"
+    depends_on:
+      - mysql
+    networks:
+      - alzheimer_network
+
+volumes:
+  mysql_data:
+
+networks:
+  alzheimer_network:
+    driver: bridge

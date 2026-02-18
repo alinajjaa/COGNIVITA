@@ -1,0 +1,103 @@
+<div class="rdv-container">
+  <h2>Rendez-vous du Médecin</h2>
+
+  <div *ngIf="successMsg" class="alert success">{{ successMsg }}</div>
+  <div *ngIf="errorMsg" class="alert error">{{ errorMsg }}</div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button (click)="filterStatus('ALL')">Tous</button>
+    <button (click)="filterStatus('PLANIFIE')">Planifiés</button>
+    <button (click)="filterStatus('CONFIRME')">Confirmés</button>
+    <button (click)="filterStatus('TERMINE')">Terminés</button>
+    <button (click)="filterStatus('ANNULE')">Annulés</button>
+    <button (click)="showToday()">Aujourd’hui</button>
+  </div>
+
+  <!--  Search -->
+  <div class="table-controls" *ngIf="rendezvousList.length > 0">
+    <div class="search-box">
+      <label>Recherche</label>
+      <input
+        type="text"
+        placeholder="Patient, statut, date..."
+        [(ngModel)]="searchTerm"
+        (input)="applySearchSortAndPaginate()"
+      />
+    </div>
+  </div>
+
+  <div class="table-card">
+
+    <div class="table-scroll" *ngIf="rendezvousList.length > 0">
+      <table class="rdv-table">
+        <thead>
+        <tr>
+          <th (click)="sortByDate()" class="sortable">
+            Date <span class="arrow">{{ sortAscending ? '↑' : '↓' }}</span>
+          </th>
+          <th>Patient</th>
+          <th>Status</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr *ngFor="let rdv of pagedRendezvous" [class.urgent]="isSoon(rdv.dateHeure)">
+          <td>{{ rdv.dateHeure | date:'short' }}</td>
+          <td>{{ rdv.patient?.nomPatient }}</td>
+
+          <td>
+              <span class="status-pill" [ngClass]="'st-' + (rdv.status || '').toLowerCase()">
+                {{ rdv.status }}
+              </span>
+          </td>
+
+          <td class="actions-col">
+            <button
+              class="btn-primary"
+              *ngIf="rdv.status === 'PLANIFIE'"
+              (click)="confirmerRendezVous(rdv)"
+            >
+              Confirmer
+            </button>
+
+            <button
+              class="btn-success"
+              *ngIf="rdv.status === 'CONFIRME'"
+              (click)="terminerRendezVous(rdv)"
+            >
+              Terminer
+            </button>
+
+            <span *ngIf="rdv.status === 'ANNULE' || rdv.status === 'TERMINE'">—</span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!--  Pagination bottom (outside scroll) -->
+    <div class="pagination" *ngIf="rendezvousList.length > 0">
+      <div class="page-size">
+        <label>Rows:</label>
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+        </select>
+      </div>
+
+      <div class="page-controls">
+        <button class="btn-light" (click)="prevPage()" [disabled]="currentPage === 1">◀</button>
+        <span class="page-info">Page {{ currentPage }} / {{ totalPages }}</span>
+        <button class="btn-light" (click)="nextPage()" [disabled]="currentPage === totalPages">▶</button>
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="rendezvousList.length === 0">
+      Aucun rendez-vous.
+    </div>
+  </div>
+</div>

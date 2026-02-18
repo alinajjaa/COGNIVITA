@@ -1,0 +1,135 @@
+<div class="rdv-container">
+  <h2>🛠️ Admin - Gestion des Rendez-vous</h2>
+
+  <div *ngIf="successMsg" class="alert success">{{ successMsg }}</div>
+  <div *ngIf="errorMsg" class="alert error">{{ errorMsg }}</div>
+
+  <!-- Filters -->
+  <div class="filters-card">
+    <div class="filters-row">
+      <div class="field search-field">
+        <label>Recherche</label>
+        <input
+          type="text"
+          placeholder="Rechercher médecin, patient, date..."
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+        />
+      </div>
+
+      <div class="field">
+        <label>Statut</label>
+        <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
+          <option value="ALL">Tous</option>
+          <option value="PLANIFIE">PLANIFIE</option>
+          <option value="CONFIRME">CONFIRME</option>
+          <option value="ANNULE">ANNULE</option>
+          <option value="TERMINE">TERMINE</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Médecin</label>
+        <select [(ngModel)]="selectedMedecinId" (change)="applyFilters()">
+          <option [ngValue]="'ALL'">Tous</option>
+          <option *ngFor="let m of medecinOptions" [ngValue]="m.id">
+            {{ m.nomMedecin }}
+          </option>
+        </select>
+      </div>
+
+      <div class="field checkbox">
+        <label>
+          <input type="checkbox" [(ngModel)]="onlyToday" (change)="applyFilters()" />
+          Aujourd’hui
+        </label>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <table class="rdv-table" *ngIf="rendezvousList.length > 0">
+      <thead>
+      <tr>
+        <th (click)="sortByDate()" class="sortable">
+          Date <span class="arrow">{{ sortAscending ? '↑' : '↓' }}</span>
+        </th>
+        <th>Médecin</th>
+        <th>Patient</th>
+        <th>Status</th>
+        <th class="actions-col">Actions</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let rdv of pagedRendezvous">
+        <td>{{ rdv.dateHeure | date:'short' }}</td>
+
+        <td>
+          {{ getMedecinName(rdv.medecin?.id) || ('#' + (rdv.medecin?.id ?? '')) }}
+        </td>
+
+        <!-- si tu n'as pas nomPatient, remplace par rdv.patient?.id -->
+        <td>{{ rdv.patient?.nomPatient || ('#' + (rdv.patient?.id ?? '')) }}</td>
+
+        <td>
+          <span class="status-pill"
+                [ngClass]="'st-' + (rdv.status || '').toLowerCase()">
+            {{ rdv.status }}
+          </span>
+        </td>
+
+        <td class="actions-col">
+          <button class="btn-warn"
+                  *ngIf="rdv.status !== 'ANNULE' && rdv.status !== 'TERMINE'"
+                  (click)="annulerRendezVous(rdv)">
+            Annuler
+          </button>
+
+          <button class="btn-danger" (click)="deleteRendezVous(rdv)">
+            Supprimer
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="rendezvousList.length > 0">
+      <div class="page-size">
+        <label>Rows:</label>
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="8">8</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+        </select>
+      </div>
+
+      <div class="page-controls">
+        <button class="btn-light" (click)="prevPage()" [disabled]="currentPage === 1">
+          ◀ Précédent
+        </button>
+
+        <span class="page-info">
+          Page {{ currentPage }} / {{ totalPages }}
+        </span>
+
+        <button class="btn-light" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          Suivant ▶
+        </button>
+      </div>
+    </div>
+
+    <div class="empty" *ngIf="rendezvousList.length === 0 && !loading">
+      Aucun rendez-vous.
+    </div>
+
+    <div class="empty" *ngIf="loading">
+      Chargement...
+    </div>
+  </div>
+</div>

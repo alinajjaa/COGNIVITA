@@ -1,0 +1,60 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.10)
+
+2026-02-04T23:21:29.466+01:00  INFO 28744 --- [backend] [           main] c.alzheimer.backend.BackendApplication   : Starting BackendApplication v0.0.1-SNAPSHOT using Java 21.0.9 with PID 28744 (C:\Alzheimer-Detection-System\Backend\target\backend-0.0.1-SNAPSHOT.jar started by MESSOUDI in C:\Alzheimer-Detection-System\Backend)
+2026-02-04T23:21:29.476+01:00  INFO 28744 --- [backend] [           main] c.alzheimer.backend.BackendApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-02-04T23:21:30.783+01:00  INFO 28744 --- [backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-04T23:21:30.868+01:00  INFO 28744 --- [backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 63 ms. Found 2 JPA repository interfaces.
+2026-02-04T23:21:31.545+01:00  INFO 28744 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-02-04T23:21:31.566+01:00  INFO 28744 --- [backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-02-04T23:21:31.567+01:00  INFO 28744 --- [backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.50]
+2026-02-04T23:21:31.605+01:00  INFO 28744 --- [backend] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-02-04T23:21:31.606+01:00  INFO 28744 --- [backend] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2026 ms
+2026-02-04T23:21:31.839+01:00  INFO 28744 --- [backend] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-02-04T23:21:31.892+01:00  INFO 28744 --- [backend] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.41.Final
+2026-02-04T23:21:31.931+01:00  INFO 28744 --- [backend] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-02-04T23:21:32.284+01:00  INFO 28744 --- [backend] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-04T23:21:32.322+01:00  INFO 28744 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-02-04T23:21:32.611+01:00  INFO 28744 --- [backend] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5563bb40
+2026-02-04T23:21:32.613+01:00  INFO 28744 --- [backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-02-04T23:21:32.644+01:00  WARN 28744 --- [backend] [           main] org.hibernate.orm.deprecation            : HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-02-04T23:21:32.646+01:00  WARN 28744 --- [backend] [           main] org.hibernate.orm.deprecation            : HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2026-02-04T23:21:32.672+01:00  INFO 28744 --- [backend] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-02-04T23:21:33.490+01:00  INFO 28744 --- [backend] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-02-04T23:21:33.561+01:00  INFO 28744 --- [backend] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-04T23:21:34.637+01:00  INFO 28744 --- [backend] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-02-04T23:21:34.675+01:00  INFO 28744 --- [backend] [           main] c.alzheimer.backend.BackendApplication   : Started BackendApplication in 6.37 seconds (process running for 7.775)
+2026-02-04T23:21:48.920+01:00  INFO 28744 --- [backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-02-04T23:21:48.921+01:00  INFO 28744 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-02-04T23:21:48.926+01:00  INFO 28744 --- [backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+=== CNN PREDICTION REQUEST ===
+File name: mild_9.jpg
+File size: 3952
+Content type: image/jpeg
+Prediction completed: Normal Cognition
+Returning response: {success=true, data={scores=[{level=normal, label=Normal Cognition, value=0.9190034142043207}, {level=mild, label=Mild Cognitive Impairment, value=0.04859795147740755}, {level=moderate, label=Moderate Dementia, value=0.024298975738703776}, {level=severe, label=Severe Alzheimer's, value=0.008099658579567926}], confidence=0.9190034142043207, diagnosis=Normal Cognition, model=CNN 3-Class (Alzheimer Detection), imageQuality=Fair, recommendations=[No immediate intervention required, Continue regular cognitive exercises, Follow-up assessment in 12 months, Maintain healthy lifestyle and diet], processingTime=2,58s, timestamp=2026-02-04T23:21:49.050457300}}
+2026-02-05T00:25:46.149+01:00  WARN 28744 --- [backend] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=39m12s929ms133µs400ns).
+=== CNN PREDICTION REQUEST ===
+File name: mild_15.jpg
+File size: 4145
+Content type: image/jpeg
+Prediction completed: Normal Cognition
+Returning response: {success=true, data={scores=[{level=normal, label=Normal Cognition, value=0.822692743788631}, {level=mild, label=Mild Cognitive Impairment, value=0.1063843537268214}, {level=moderate, label=Moderate Dementia, value=0.0531921768634107}, {level=severe, label=Severe Alzheimer's, value=0.0177307256211369}], confidence=0.822692743788631, diagnosis=Normal Cognition, model=CNN 3-Class (Alzheimer Detection), imageQuality=Fair, recommendations=[No immediate intervention required, Continue regular cognitive exercises, Follow-up assessment in 12 months, Maintain healthy lifestyle and diet], processingTime=3,21s, timestamp=2026-02-05T00:26:24.333930400}}
+2026-02-05T00:52:36.724+01:00  WARN 28744 --- [backend] [l-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection com.mysql.cj.jdbc.ConnectionImpl@745f368b (No operations allowed after connection closed.). Possibly consider using a shorter maxLifetime value.
+2026-02-05T00:52:43.366+01:00  WARN 28744 --- [backend] [l-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection com.mysql.cj.jdbc.ConnectionImpl@7ab03bce (No operations allowed after connection closed.). Possibly consider using a shorter maxLifetime value.
+2026-02-05T00:52:46.026+01:00  WARN 28744 --- [backend] [l-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection com.mysql.cj.jdbc.ConnectionImpl@67514cd5 (No operations allowed after connection closed.). Possibly consider using a shorter maxLifetime value.
+2026-02-05T00:52:49.866+01:00  WARN 28744 --- [backend] [l-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection com.mysql.cj.jdbc.ConnectionImpl@e273859 (No operations allowed after connection closed.). Possibly consider using a shorter maxLifetime value.
