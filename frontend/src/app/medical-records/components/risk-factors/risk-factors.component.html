@@ -1,0 +1,107 @@
+<div class="risk-factors-container">
+  <div class="header">
+    <h2>⚠️ Risk Factors</h2>
+    <button class="btn btn-primary" (click)="openCreateForm()">➕ Add Risk Factor</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-value">{{ stats.totalCount }}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card active"><div class="stat-value">{{ stats.activeCount }}</div><div class="stat-label">Active</div></div>
+    <div class="stat-card critical"><div class="stat-value">{{ stats.criticalCount }}</div><div class="stat-label">Critical</div></div>
+    <div class="stat-card high"><div class="stat-value">{{ stats.highCount }}</div><div class="stat-label">High Risk</div></div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}<button (click)="error = null" class="close-btn">×</button></div>
+  <div *ngIf="loading" class="loading"><div class="spinner"></div><p>Loading...</p></div>
+
+  <div *ngIf="!loading && riskFactors.length > 0" class="risk-factors-list">
+    <div *ngFor="let factor of riskFactors" class="risk-factor-card" [ngClass]="{'inactive': !factor.isActive}">
+      <div class="factor-header">
+        <div class="factor-title">
+          <span class="severity-icon">{{ getSeverityIcon(factor.severity) }}</span>
+          <h3>{{ factor.factorType }}</h3>
+        </div>
+        <div class="factor-actions">
+          <span class="badge" [ngClass]="getSeverityClass(factor.severity)">{{ factor.severity }}</span>
+          <span *ngIf="!factor.isActive" class="badge badge-inactive">Inactive</span>
+          <button class="btn-icon" (click)="openEditForm(factor)" title="Edit">✏️</button>
+          <button class="btn-icon btn-danger" (click)="deleteRiskFactor(factor.id!)" title="Remove">🗑️</button>
+        </div>
+      </div>
+      <div class="factor-details">
+        <p *ngIf="factor.notes" class="factor-notes"><strong>Notes:</strong> {{ factor.notes }}</p>
+        <div class="factor-meta">
+          <span *ngIf="factor.diagnosedDate">📅 Diagnosed: {{ formatDate(factor.diagnosedDate) }}</span>
+          <span>🕒 Added: {{ formatDate(factor.createdAt!) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && riskFactors.length === 0 && !error" class="empty-state">
+    <p>No risk factors recorded. Add the first one to track this patient's risk profile.</p>
+  </div>
+
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="btn btn-sm" [disabled]="currentPage === 0" (click)="changePage(currentPage - 1)">← Prev</button>
+    <span>{{ currentPage + 1 }} / {{ totalPages }}</span>
+    <button class="btn btn-sm" [disabled]="currentPage >= totalPages - 1" (click)="changePage(currentPage + 1)">Next →</button>
+  </div>
+
+  <!-- FORM MODAL -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing ? 'Edit' : 'Add' }} Risk Factor</h2>
+        <button class="close-btn" (click)="closeForm()">×</button>
+      </div>
+
+      <form (ngSubmit)="submitForm()" class="risk-factor-form">
+        <div class="form-group">
+          <label>Risk Factor Type *</label>
+          <select [(ngModel)]="formData.factorType" name="factorType" required class="form-control">
+            <option value="">Select a risk factor</option>
+            <option *ngFor="let type of riskFactorTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Severity Level *</label>
+          <select [(ngModel)]="formData.severity" name="severity" required class="form-control">
+            <option *ngFor="let level of severityLevels" [value]="level">{{ getSeverityIcon(level) }} {{ level }}</option>
+          </select>
+          <small class="hint">
+            LOW = minor impact · MEDIUM = moderate · HIGH = significant · CRITICAL = immediate attention needed
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Date Diagnosed</label>
+          <input type="date" [(ngModel)]="formData.diagnosedDate" name="diagnosedDate" class="form-control"
+                 [max]="todayDate">
+          <small class="hint">When was this condition diagnosed? (affects risk score calculation)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Additional Notes</label>
+          <textarea [(ngModel)]="formData.notes" name="notes" rows="3" class="form-control"
+                    placeholder="E.g., currently on medication, under control, severity worsening..."></textarea>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="formData.isActive" name="isActive">
+            <span>Active — currently affecting the patient's risk profile</span>
+          </label>
+        </div>
+
+        <div *ngIf="error" class="form-error">⚠️ {{ error }}</div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary">{{ isEditing ? 'Update' : 'Add' }} Risk Factor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

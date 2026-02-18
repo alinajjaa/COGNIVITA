@@ -1,0 +1,222 @@
+<!-- src/app/cognitive-activities/activity-play/activity-play.html -->
+<div class="play-container">
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading game...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    <p>⚠️ {{ error }}</p>
+    <button routerLink="/activities" class="btn-back">Back to Activities</button>
+  </div>
+
+  <!-- Game Content -->
+  <div *ngIf="!loading && !error && activity" class="game-content">
+
+    <!-- Header -->
+    <div class="game-header">
+      <div class="game-info">
+        <h1>{{ activity.title }}</h1>
+        <p class="game-type">{{ getTypeIcon(activity.type) }} {{ activity.type }}</p>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat-item">
+          <span class="stat-label">SCORE</span>
+          <span class="stat-value">{{ gameState.score }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">TIME</span>
+          <span class="stat-value timer" [class.warning]="gameState.timeLeft < 10">
+            ⏱️ {{ formatTime(gameState.timeLeft) }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">STATUS</span>
+          <span class="stat-value status">{{ getStatusMessage() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div *ngIf="gameState.currentPhase === 'QUESTION'" class="progress-bar">
+      <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+    </div>
+
+    <!-- Game Area -->
+    <div class="game-area">
+
+      <!-- ========== MEMORY GAME ========== -->
+      <div *ngIf="activity.type === 'MEMORY'">
+
+        <!-- Memorize Phase -->
+        <div *ngIf="gameState.currentPhase === 'MEMORIZE'" class="memory-phase">
+          <h2>📝 Memorize these words:</h2>
+          <div class="words-grid">
+            <div *ngFor="let word of memoryWords" class="word-card">
+              {{ word }}
+            </div>
+          </div>
+          <p class="timer-warning">Time left: {{ formatTime(gameState.timeLeft) }}</p>
+          <button class="btn-start" (click)="startRecall()">
+            Start Recall →
+          </button>
+        </div>
+
+        <!-- Recall Phase -->
+        <div *ngIf="gameState.currentPhase === 'RECALL'" class="recall-phase">
+          <h2>Type all the words you remember:</h2>
+          <p class="hint">Separate words with commas (ex: chat, chien)</p>
+          <textarea
+            [(ngModel)]="userAnswer"
+            placeholder="Type your answer here..."
+            rows="4"
+            class="answer-input"></textarea>
+          <button class="btn-submit" (click)="submitAnswer()" [disabled]="!userAnswer">
+            Submit Answer
+          </button>
+          <button class="btn-abandon" (click)="abandonGame()">
+            Abandon Game
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== ATTENTION GAME ========== -->
+      <div *ngIf="activity.type === 'ATTENTION' && gameState.currentPhase === 'QUESTION'">
+        <div *ngIf="currentQuestion" class="attention-game">
+
+          <!-- Stroop Test -->
+          <div *ngIf="currentQuestion.word" class="stroop-test">
+            <h2>Say the COLOR, not the word</h2>
+            <div class="stroop-word" [style.color]="currentQuestion.color">
+              {{ currentQuestion.word }}
+            </div>
+            <div class="options">
+              <button class="option-btn"
+                      [class.selected]="selectedOption === 0"
+                      (click)="selectedOption=0">🔴 Red</button>
+              <button class="option-btn"
+                      [class.selected]="selectedOption === 1"
+                      (click)="selectedOption=1">🔵 Blue</button>
+              <button class="option-btn"
+                      [class.selected]="selectedOption === 2"
+                      (click)="selectedOption=2">🟢 Green</button>
+            </div>
+          </div>
+
+          <!-- Sequence Reverse -->
+          <div *ngIf="currentQuestion.sequence" class="sequence-test">
+            <h2>Repeat in reverse order:</h2>
+            <div class="sequence-display">
+              {{ currentQuestion.sequence.join(' - ') }}
+            </div>
+            <p class="hint">Type the numbers in reverse order (comma separated)</p>
+            <input
+              type="text"
+              [(ngModel)]="sequenceAnswer"
+              placeholder="ex: 4,3,2,1"
+              class="answer-input">
+          </div>
+
+          <button class="btn-submit"
+                  (click)="submitAnswer()"
+                  [disabled]="(currentQuestion.word && selectedOption === null) ||
+                             (currentQuestion.sequence && !sequenceAnswer)">
+            Submit Answer
+          </button>
+          <button class="btn-abandon" (click)="abandonGame()">
+            Abandon Game
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== LOGIC GAME ========== -->
+      <div *ngIf="activity.type === 'LOGIC' && gameState.currentPhase === 'QUESTION'">
+        <div *ngIf="currentQuestion" class="logic-game">
+
+          <!-- Sequence Logic -->
+          <div *ngIf="currentQuestion.type === 'sequence' || currentQuestion.sequence" class="sequence-game">
+            <h2>Complete the sequence:</h2>
+            <div class="sequence">
+              <span *ngFor="let num of (currentQuestion.sequence || currentQuestion); let last = last">
+                {{ num }}<span *ngIf="!last">, </span>
+              </span>
+              <span class="question-mark">?</span>
+            </div>
+            <input
+              type="number"
+              [(ngModel)]="sequenceAnswer"
+              placeholder="Your answer"
+              class="answer-input">
+          </div>
+
+          <!-- Math Problem -->
+          <div *ngIf="currentQuestion.question" class="problem-game">
+            <h2>Solve the problem:</h2>
+            <div class="problem">
+              {{ currentQuestion.question }}
+            </div>
+            <input
+              type="text"
+              [(ngModel)]="userAnswer"
+              placeholder="Your answer"
+              class="answer-input">
+          </div>
+
+          <!-- Riddle -->
+          <div *ngIf="currentQuestion.riddle || currentQuestion.question?.includes('?')" class="riddle-game">
+            <h2>Riddle:</h2>
+            <div class="riddle">
+              {{ currentQuestion.riddle || currentQuestion.question }}
+            </div>
+            <input
+              type="text"
+              [(ngModel)]="userAnswer"
+              placeholder="Your answer"
+              class="answer-input">
+          </div>
+
+          <button class="btn-submit"
+                  (click)="submitAnswer()"
+                  [disabled]="(!sequenceAnswer && !userAnswer)">
+            Submit Answer
+          </button>
+          <button class="btn-abandon" (click)="abandonGame()">
+            Abandon Game
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== GAME COMPLETED ========== -->
+      <div *ngIf="gameState.currentPhase === 'COMPLETED'" class="game-completed">
+        <h2>🎉 Game Completed!</h2>
+        <div class="final-score">
+          <span class="score-big">{{ gameState.score }}</span>
+          <span class="score-label">points</span>
+        </div>
+        <div class="stats-summary">
+          <p>✅ Correct answers: {{ getCorrectAnswersCount() }}/{{ gameState.totalQuestions }}</p>
+          <p>⭐ Total points: {{ getTotalPoints() }}</p>
+          <p>⏱️ Time spent: {{ getTimeSpent() }}</p>
+        </div>
+        <div class="completion-actions">
+          <button class="btn-restart" (click)="restartGame()">Play Again</button>
+          <button class="btn-results" (click)="viewResults()">View Details</button>
+          <button class="btn-back" routerLink="/activities">Back to List</button>
+        </div>
+      </div>
+
+      <!-- ========== GAME ABANDONED ========== -->
+      <div *ngIf="gameState.currentPhase === 'ABANDONED'" class="game-abandoned">
+        <h2>😢 Game Abandoned</h2>
+        <p>Your score: {{ gameState.score }}</p>
+        <div class="completion-actions">
+          <button class="btn-restart" (click)="restartGame()">Try Again</button>
+          <button class="btn-back" routerLink="/activities">Back to Activities</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,210 @@
+<!-- src/app/cognitive-activities/activity-form/activity-form.html -->
+<div class="form-container">
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Formulaire -->
+  <div *ngIf="!loading" class="form-content">
+
+    <!-- Header -->
+    <div class="form-header">
+      <h1>{{ isEditMode ? '✏️ Modifier' : '➕ Nouvelle' }} activité cognitive</h1>
+      <p *ngIf="!isEditMode">Créez un nouvel exercice pour entraîner le cerveau</p>
+      <p *ngIf="isEditMode">Modifiez les paramètres de l'activité</p>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="error" class="alert alert-error">
+      <span>⚠️ {{ error }}</span>
+      <button class="close-btn" (click)="error = ''">×</button>
+    </div>
+
+    <div *ngIf="success" class="alert alert-success">
+      <span>✅ {{ success }}</span>
+      <div class="progress-bar success-bar">
+        <div class="progress-fill" style="width: 100%; animation: progress 1.5s linear;"></div>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <form (ngSubmit)="onSubmit()" class="activity-form">
+
+      <!-- Section Informations de base -->
+      <div class="form-section">
+        <h2>📋 Informations de base</h2>
+
+        <div class="form-group">
+          <label for="title">
+            Titre <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="title"
+            [(ngModel)]="activity.title"
+            name="title"
+            class="form-control"
+            placeholder="ex: Jeu de mémoire - Les animaux"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            [(ngModel)]="activity.description"
+            name="description"
+            class="form-control"
+            rows="3"
+            placeholder="Décrivez brièvement l'activité..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="type">
+              Type <span class="required">*</span>
+            </label>
+            <select
+              id="type"
+              [(ngModel)]="activity.type"
+              name="type"
+              class="form-control"
+              required>
+              <option *ngFor="let type of types" [value]="type.value">
+                {{ type.icon }} {{ type.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group half">
+            <label for="difficulty">
+              Difficulté <span class="required">*</span>
+            </label>
+            <select
+              id="difficulty"
+              [(ngModel)]="activity.difficulty"
+              name="difficulty"
+              class="form-control"
+              required>
+              <option *ngFor="let diff of difficulties" [value]="diff.value">
+                {{ diff.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Paramètres du jeu -->
+      <div class="form-section">
+        <h2>⚙️ Paramètres du jeu</h2>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="maxScore">Score maximum</label>
+            <input
+              type="number"
+              id="maxScore"
+              [(ngModel)]="activity.maxScore"
+              name="maxScore"
+              class="form-control"
+              min="0"
+              placeholder="ex: 10">
+          </div>
+
+          <div class="form-group half">
+            <label for="timeLimit">Temps limite (secondes)</label>
+            <input
+              type="number"
+              id="timeLimit"
+              [(ngModel)]="activity.timeLimit"
+              name="timeLimit"
+              class="form-control"
+              min="0"
+              placeholder="ex: 120">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="instructions">Instructions</label>
+          <textarea
+            id="instructions"
+            [(ngModel)]="activity.instructions"
+            name="instructions"
+            class="form-control"
+            rows="3"
+            placeholder="Expliquez comment jouer..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="imageUrl">URL de l'image</label>
+          <input
+            type="url"
+            id="imageUrl"
+            [(ngModel)]="activity.imageUrl"
+            name="imageUrl"
+            class="form-control"
+            placeholder="https://example.com/image.jpg">
+        </div>
+      </div>
+
+      <!-- Section Contenu (JSON) -->
+      <div class="form-section">
+        <div class="section-header">
+          <h2>📦 Contenu du jeu</h2>
+          <button type="button" class="btn-template" (click)="loadTemplate()">
+            Charger un exemple
+          </button>
+        </div>
+
+        <p class="hint">
+          Format JSON selon le type de jeu :
+          <span *ngIf="activity.type === 'MEMORY'">Liste de mots à mémoriser</span>
+          <span *ngIf="activity.type === 'ATTENTION'">Items pour test de Stroop</span>
+          <span *ngIf="activity.type === 'LOGIC'">Séquences logiques</span>
+        </p>
+
+        <div class="form-group">
+          <textarea
+            [(ngModel)]="activity.content"
+            name="content"
+            class="form-control json-editor"
+            rows="10"
+            placeholder="Entrez le contenu au format JSON..."
+            (blur)="formatContent()"></textarea>
+        </div>
+
+        <!-- Prévisualisation du type de contenu -->
+        <div class="content-preview" *ngIf="activity.content">
+          <h3>Aperçu</h3>
+          <pre>{{ activity.content | slice:0:200 }}{{ activity.content.length > 200 ? '...' : '' }}</pre>
+        </div>
+      </div>
+
+      <!-- Section Statut -->
+      <div class="form-section">
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="activity.isActive"
+              name="isActive">
+            <span>Activité active (visible dans la liste)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="cancel()">
+          Annuler
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="submitting">
+          <span *ngIf="!submitting">{{ isEditMode ? 'Mettre à jour' : 'Créer' }}</span>
+          <span *ngIf="submitting" class="loading-spinner"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

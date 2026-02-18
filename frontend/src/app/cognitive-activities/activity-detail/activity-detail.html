@@ -1,0 +1,113 @@
+<!-- src/app/cognitive-activities/activity-detail/activity-detail.html -->
+<div class="detail-container">
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Chargement des détails...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    <p>⚠️ {{ error }}</p>
+    <button class="btn-back" (click)="goBack()">Retour à la liste</button>
+  </div>
+
+  <!-- Detail Content -->
+  <div *ngIf="!loading && !error && activity" class="detail-content">
+
+    <!-- Header avec bouton retour -->
+    <div class="detail-header">
+      <button class="btn-back-icon" (click)="goBack()">←</button>
+      <h1>{{ activity.title }}</h1>
+      <div class="header-actions">
+        <button class="btn-play" (click)="playActivity()">▶️ Jouer</button>
+        <button class="btn-edit" (click)="editActivity()">✏️ Modifier</button>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="badges-container">
+      <span class="badge type-badge" [style.background]="getDifficultyColor(activity.type)">
+        {{ getTypeIcon(activity.type) }} {{ getTypeText(activity.type) }}
+      </span>
+      <span class="badge difficulty-badge" [style.background]="getDifficultyColor(activity.difficulty)">
+        {{ getDifficultyText(activity.difficulty) }}
+      </span>
+      <span class="badge status-badge" [class.active]="activity.isActive">
+        {{ activity.isActive ? '✅ Active' : '⛔ Inactive' }}
+      </span>
+    </div>
+
+    <!-- Description -->
+    <div class="info-card">
+      <h2>📝 Description</h2>
+      <p class="description">{{ activity.description || 'Aucune description' }}</p>
+    </div>
+
+    <!-- Instructions -->
+    <div class="info-card">
+      <h2>📋 Instructions</h2>
+      <p class="instructions">{{ activity.instructions || 'Aucune instruction' }}</p>
+    </div>
+
+    <!-- Game Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-icon">⭐</span>
+        <div class="stat-info">
+          <span class="stat-label">Score max</span>
+          <span class="stat-value">{{ activity.maxScore || 'N/A' }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⏱️</span>
+        <div class="stat-info">
+          <span class="stat-label">Temps limite</span>
+          <span class="stat-value">{{ activity.timeLimit ? activity.timeLimit + 's' : 'Illimité' }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📅</span>
+        <div class="stat-info">
+          <span class="stat-label">Créé le</span>
+          <span class="stat-value">{{ formatDate(activity.createdAt) }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🔄</span>
+        <div class="stat-info">
+          <span class="stat-label">Modifié le</span>
+          <span class="stat-value">{{ formatDate(activity.updatedAt) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Content (JSON formaté) -->
+    <div class="content-card" *ngIf="formattedContent">
+      <h2>📦 Contenu du jeu</h2>
+      <pre class="content-json">{{ formattedContent }}</pre>
+    </div>
+
+    <!-- Image (if any) -->
+    <div class="image-card" *ngIf="activity.imageUrl">
+      <h2>🖼️ Image</h2>
+      <img [src]="activity.imageUrl" alt="Activity image" class="activity-image">
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="btn-play-large" (click)="playActivity()">
+        <span class="btn-icon">▶️</span>
+        Commencer le jeu
+      </button>
+      <button class="btn-edit-large" (click)="editActivity()">
+        <span class="btn-icon">✏️</span>
+        Modifier
+      </button>
+      <button class="btn-back-large" (click)="goBack()">
+        <span class="btn-icon">←</span>
+        Retour
+      </button>
+    </div>
+  </div>
+</div>

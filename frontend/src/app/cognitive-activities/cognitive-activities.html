@@ -1,0 +1,15 @@
+<!-- src/app/cognitive-activities/cognitive-activities.html -->
+<div class="cognitive-module">
+  <div class="module-header">
+    <h1>🧠 Activités Cognitives</h1>
+    <p>Entraînez votre mémoire, attention et logique</p>
+
+    <div class="nav-links">
+      <a routerLink="/activities" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">📋 Liste</a>
+      <a routerLink="/activities/new" routerLinkActive="active">➕ Nouvelle activité</a>
+    </div>
+  </div>
+
+  <!-- C'EST ICI QUE LES ENFANTS S'AFFICHENT -->
+  <router-outlet></router-outlet>
+</div>
