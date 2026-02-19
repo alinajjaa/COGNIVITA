@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/mmse")
-@CrossOrigin(origins = "*")
 public class MMSEController {
 
   @Autowired
@@ -82,7 +81,6 @@ public class MMSEController {
     private String test_date;
     private String notes;
 
-    // Getters
     public String getPatient_name() { return patient_name; }
     public int getOrientation_score() { return orientation_score; }
     public int getRegistration_score() { return registration_score; }
@@ -94,7 +92,6 @@ public class MMSEController {
     public String getTest_date() { return test_date; }
     public String getNotes() { return notes; }
 
-    // Setters
     public void setPatient_name(String patient_name) { this.patient_name = patient_name; }
     public void setOrientation_score(int orientation_score) { this.orientation_score = orientation_score; }
     public void setRegistration_score(int registration_score) { this.registration_score = registration_score; }

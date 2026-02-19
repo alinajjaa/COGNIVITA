@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/risk-factors")
-@CrossOrigin(origins = "http://localhost:4200")
 public class RiskFactorController {
 
     private final RiskFactorRepository riskFactorRepository;
@@ -32,7 +31,6 @@ public class RiskFactorController {
         this.timelineService = timelineService;
     }
 
-    // GET paginated
     @GetMapping("/medical-record/{medicalRecordId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getRiskFactorsByMedicalRecord(
             @PathVariable Long medicalRecordId,
@@ -63,7 +61,6 @@ public class RiskFactorController {
         }
     }
 
-    // GET active only
     @GetMapping("/medical-record/{medicalRecordId}/active")
     public ResponseEntity<ApiResponse<List<RiskFactorDTO>>> getActiveRiskFactors(
             @PathVariable Long medicalRecordId) {
@@ -78,7 +75,6 @@ public class RiskFactorController {
         }
     }
 
-    // GET by ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<RiskFactorDTO>> getRiskFactorById(@PathVariable Long id) {
         return riskFactorRepository.findById(id)
@@ -87,7 +83,6 @@ public class RiskFactorController {
                         .body(ApiResponse.error("Not found", "No factor with ID: " + id)));
     }
 
-    // CREATE
     @PostMapping
     @Transactional
     public ResponseEntity<ApiResponse<RiskFactorDTO>> createRiskFactor(
@@ -98,7 +93,6 @@ public class RiskFactorController {
                         .body(ApiResponse.error("Missing field", "medicalRecordId is required"));
             }
             Long recordId = Long.valueOf(request.get("medicalRecordId").toString());
-            // Use standard findById — inherited from JpaRepository, always resolvable
             Optional<MedicalRecord> opt = medicalRecordRepository.findById(recordId);
             if (opt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -110,7 +104,6 @@ public class RiskFactorController {
             applyRequest(request, rf);
             rf.setIsActive(true);
             RiskFactor saved = riskFactorRepository.save(rf);
-            // Reload with risk factors list for accurate score recalc
             medicalRecordRepository.findById(recordId).ifPresent(r -> {
                 riskScoreService.updateRiskScore(r);
                 medicalRecordRepository.save(r);
@@ -127,7 +120,6 @@ public class RiskFactorController {
         }
     }
 
-    // UPDATE
     @PutMapping("/{id}")
     @Transactional
     public ResponseEntity<ApiResponse<RiskFactorDTO>> updateRiskFactor(
@@ -159,7 +151,6 @@ public class RiskFactorController {
         }
     }
 
-    // DELETE (soft)
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<ApiResponse<Void>> deleteRiskFactor(@PathVariable Long id) {
@@ -185,7 +176,6 @@ public class RiskFactorController {
         }
     }
 
-    // STATS
     @GetMapping("/medical-record/{medicalRecordId}/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getRiskFactorStats(
             @PathVariable Long medicalRecordId) {
@@ -209,7 +199,6 @@ public class RiskFactorController {
         }
     }
 
-    // HELPER
     private void applyRequest(Map<String, Object> req, RiskFactor rf) {
         if (req.get("factorType") != null)
             rf.setFactorType(req.get("factorType").toString());

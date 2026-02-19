@@ -5,6 +5,7 @@ import com.alzheimer.backend.user.User;
 import com.alzheimer.backend.user.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -12,7 +13,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/medical-records")
-@CrossOrigin(origins = "http://localhost:4200")
 public class MedicalRecordController {
 
     private final MedicalRecordRepository medicalRecordRepository;
@@ -44,6 +44,7 @@ public class MedicalRecordController {
 
     // ── GET ALL (paginated + filtered) ─────────────────────────────────────────
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllRecords(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -55,7 +56,6 @@ public class MedicalRecordController {
         try {
             List<MedicalRecord> all = medicalRecordRepository.findAllWithUser();
 
-            // Apply filters
             if (riskLevel != null && !riskLevel.isEmpty()) {
                 RiskLevel rl = RiskLevel.valueOf(riskLevel.toUpperCase());
                 all = all.stream().filter(r -> rl.equals(r.getRiskLevel())).collect(Collectors.toList());
@@ -69,9 +69,8 @@ public class MedicalRecordController {
                 all = all.stream().filter(r -> fh.equals(r.getFamilyHistory())).collect(Collectors.toList());
             }
 
-            // Sort
             all.sort((a, b) -> {
-                int cmp = 0;
+                int cmp;
                 switch (sortBy) {
                     case "age": cmp = Comparator.comparingInt((MedicalRecord r) -> r.getAge() == null ? 0 : r.getAge()).compare(a, b); break;
                     case "riskScore": cmp = Comparator.comparingDouble((MedicalRecord r) -> r.getRiskScore() == null ? 0 : r.getRiskScore()).compare(a, b); break;
@@ -80,7 +79,6 @@ public class MedicalRecordController {
                 return sortDirection.equalsIgnoreCase("ASC") ? cmp : -cmp;
             });
 
-            // Paginate manually
             int total = all.size();
             int fromIndex = page * size;
             int toIndex = Math.min(fromIndex + size, total);
@@ -106,6 +104,7 @@ public class MedicalRecordController {
 
     // ── GET BY ID ───────────────────────────────────────────────────────────────
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<MedicalRecordDTO>> getRecordById(@PathVariable Long id) {
         try {
             return medicalRecordRepository.findByIdWithUser(id)
@@ -123,6 +122,7 @@ public class MedicalRecordController {
 
     // ── GET BY USER ─────────────────────────────────────────────────────────────
     @GetMapping("/user/{userId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<List<MedicalRecordDTO>>> getRecordsByUser(@PathVariable Long userId) {
         try {
             List<MedicalRecordDTO> records = medicalRecordRepository.findByUserIdWithUser(userId)
@@ -136,6 +136,7 @@ public class MedicalRecordController {
 
     // ── PATIENT DASHBOARD ───────────────────────────────────────────────────────
     @GetMapping("/{id}/dashboard")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPatientDashboard(@PathVariable Long id) {
         try {
             Optional<MedicalRecord> opt = medicalRecordRepository.findByIdWithUser(id);
@@ -193,6 +194,7 @@ public class MedicalRecordController {
 
     // ── CREATE ──────────────────────────────────────────────────────────────────
     @PostMapping
+    @Transactional
     public ResponseEntity<ApiResponse<MedicalRecordDTO>> createRecord(@RequestBody Map<String, Object> request) {
         try {
             if (request.get("userId") == null) {
@@ -208,9 +210,12 @@ public class MedicalRecordController {
             MedicalRecord record = new MedicalRecord();
             record.setUser(userOpt.get());
             applyRequestToRecord(request, record);
-            riskScoreService.updateRiskScore(record);
 
+            // Save first so the record gets an ID, then calculate risk score
             MedicalRecord saved = medicalRecordRepository.save(record);
+            riskScoreService.updateRiskScore(saved);
+            medicalRecordRepository.save(saved);
+
             timelineService.logMedicalRecordUpdated(saved);
 
             List<String> recs = recommendationService.generateRecommendations(saved, saved.getRiskScore() != null ? saved.getRiskScore() : 0);
@@ -224,6 +229,7 @@ public class MedicalRecordController {
 
     // ── UPDATE ──────────────────────────────────────────────────────────────────
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<ApiResponse<MedicalRecordDTO>> updateRecord(
             @PathVariable Long id, @RequestBody Map<String, Object> request) {
         try {
@@ -234,9 +240,12 @@ public class MedicalRecordController {
             }
             MedicalRecord record = existingOpt.get();
             applyRequestToRecord(request, record);
-            riskScoreService.updateRiskScore(record);
 
+            // Save first, then recalculate risk score with updated data
             MedicalRecord updated = medicalRecordRepository.save(record);
+            riskScoreService.updateRiskScore(updated);
+            medicalRecordRepository.save(updated);
+
             timelineService.logMedicalRecordUpdated(updated);
 
             List<String> recs = recommendationService.generateRecommendations(updated, updated.getRiskScore() != null ? updated.getRiskScore() : 0);
@@ -249,6 +258,7 @@ public class MedicalRecordController {
 
     // ── DELETE ──────────────────────────────────────────────────────────────────
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<ApiResponse<Void>> deleteRecord(@PathVariable Long id) {
         try {
             if (!medicalRecordRepository.existsById(id)) {
@@ -265,6 +275,7 @@ public class MedicalRecordController {
 
     // ── STATS ───────────────────────────────────────────────────────────────────
     @GetMapping("/stats")
+    @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<Map<String, Object>>> getStats() {
         try {
             List<MedicalRecord> all = medicalRecordRepository.findAllWithUser();

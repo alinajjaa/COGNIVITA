@@ -9,7 +9,6 @@ import org.springframework.util.MultiValueMap;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PredictionController {
 
     private final String FASTAPI_URL = "http://127.0.0.1:8000/predict";

@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:4200")
 public class AdminDashboardController {
 
     private final UserRepository userRepository;
@@ -129,7 +128,7 @@ public class AdminDashboardController {
 
     @GetMapping("/filter")
     public ResponseEntity<ApiResponse<List<UserDashboardDTO>>> filterUsers(@RequestParam(required = false) UserRole role,
-                                              @RequestParam(required = false) Boolean active) {
+                                          @RequestParam(required = false) Boolean active) {
         try {
             List<User> users = userRepository.findAll();
 
@@ -211,7 +210,6 @@ public class AdminDashboardController {
         try {
             List<Map<String, Object>> activities = new ArrayList<>();
             
-            // Get recent users
             userRepository.findAll().stream()
                     .sorted(Comparator.comparing(User::getCreatedAt).reversed())
                     .limit(Math.max(1, limit / 2))
@@ -224,7 +222,6 @@ public class AdminDashboardController {
                         activities.add(activity);
                     });
 
-            // Get recent tests
             mmseRepository.findAll().stream()
                     .sorted(Comparator.comparing(MMSETest::getTestDate).reversed())
                     .limit(Math.max(1, limit / 2))
@@ -360,4 +357,3 @@ public class AdminDashboardController {
         }
     }
 }
-

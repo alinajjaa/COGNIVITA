@@ -3,14 +3,12 @@ package com.alzheimer.backend.cnn;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.cors.CorsUtils;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/cnn")
-@CrossOrigin(origins = "http://localhost:4200", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS})
 public class CNNPredictionController {
 
     @PostMapping("/predict")
@@ -28,7 +26,6 @@ public class CNNPredictionController {
                 ));
             }
 
-            // Validate file type
             String contentType = file.getContentType();
             if (contentType == null || (!contentType.startsWith("image/") && 
                 !file.getOriginalFilename().endsWith(".dcm"))) {
@@ -38,7 +35,6 @@ public class CNNPredictionController {
                 ));
             }
 
-            // Validate file size (max 50MB)
             if (file.getSize() > 50_000_000) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -46,15 +42,11 @@ public class CNNPredictionController {
                 ));
             }
 
-            // Get file bytes
             byte[] fileBytes = file.getBytes();
-
-            // Call AI model for prediction (mock implementation)
             Map<String, Object> predictionResult = performPrediction(fileBytes, file.getOriginalFilename());
             
             System.out.println("Prediction completed: " + predictionResult.get("diagnosis"));
 
-            // Return successful response
             Map<String, Object> response = Map.of(
                 "success", true,
                 "data", predictionResult
@@ -81,12 +73,8 @@ public class CNNPredictionController {
     }
 
     private Map<String, Object> performPrediction(byte[] imageBytes, String filename) {
-        // Generate prediction based on image analysis
-        // This is a mock implementation - replace with actual CNN model
-        
         Map<String, Object> result = new HashMap<>();
         
-        // Simulated diagnosis based on image properties
         String diagnosis = determineDiagnosis(imageBytes, filename);
         double confidence = generateConfidence();
         
@@ -96,20 +84,13 @@ public class CNNPredictionController {
         result.put("processingTime", String.format("%.2f", Math.random() * 3 + 0.5) + "s");
         result.put("imageQuality", determineImageQuality(imageBytes));
         result.put("timestamp", LocalDateTime.now().toString());
-        
-        // Add recommendations
         result.put("recommendations", getRecommendations(diagnosis));
-        
-        // Add score breakdown
         result.put("scores", generateScoreBreakdown(diagnosis, confidence));
         
         return result;
     }
 
     private String determineDiagnosis(byte[] imageBytes, String filename) {
-        // Mock: analyze image bytes to determine diagnosis
-        // In production, this would call actual CNN model
-        
         int fileSize = imageBytes.length;
         
         if (fileSize < 500_000) {
@@ -124,7 +105,6 @@ public class CNNPredictionController {
     }
 
     private double generateConfidence() {
-        // Generate realistic confidence scores (0.8 - 0.98)
         return 0.80 + (Math.random() * 0.18);
     }
 
@@ -189,7 +169,6 @@ public class CNNPredictionController {
         double moderateScore = 0;
         double severeScore = 0;
         
-        // Distribute scores based on diagnosis
         switch (diagnosis.toLowerCase()) {
             case "normal cognition":
                 normalScore = confidence;
@@ -228,7 +207,7 @@ public class CNNPredictionController {
     private Map<String, Object> createScoreEntry(String label, double score, String level) {
         Map<String, Object> entry = new HashMap<>();
         entry.put("label", label);
-        entry.put("value", Math.max(0, Math.min(1, score))); // Clamp between 0 and 1
+        entry.put("value", Math.max(0, Math.min(1, score)));
         entry.put("level", level);
         return entry;
     }

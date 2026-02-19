@@ -1,0 +1,45 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      routes:
+        # ─── Medical Records Service (Backend - 8081) ────────────────────────
+        - id: medical-records-service
+          uri: lb://medical-records-service
+          predicates:
+            - Path=/api/medical-records/**,/api/risk-factors/**,/api/prevention-actions/**,/api/timeline/**,/api/statistics/**,/api/admin/**,/api/users/**,/api/mmse/**,/api/cnn/**
+          filters:
+            - StripPrefix=0
+
+        # ─── Health Prevention Service (8082) ────────────────────────────────
+        - id: health-prevention-service
+          uri: lb://health-prevention-service
+          predicates:
+            - Path=/api/health-prevention/**
+          filters:
+            - StripPrefix=0
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

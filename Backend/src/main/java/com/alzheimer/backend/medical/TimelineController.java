@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/timeline")
-@CrossOrigin(origins = "http://localhost:4200")
 public class TimelineController {
 
     private final TimelineRepository timelineRepository;
@@ -20,7 +19,6 @@ public class TimelineController {
         this.timelineRepository = timelineRepository;
     }
 
-    // Get all timeline events for a medical record
     @GetMapping("/medical-record/{medicalRecordId}")
     public ResponseEntity<ApiResponse<List<TimelineDTO>>> getTimeline(
             @PathVariable Long medicalRecordId) {
@@ -35,7 +33,6 @@ public class TimelineController {
         }
     }
 
-    // Filter timeline by event type
     @GetMapping("/medical-record/{medicalRecordId}/type/{eventType}")
     public ResponseEntity<ApiResponse<List<TimelineDTO>>> getTimelineByType(
             @PathVariable Long medicalRecordId, @PathVariable String eventType) {
@@ -51,7 +48,6 @@ public class TimelineController {
         }
     }
 
-    // Filter timeline by date range
     @GetMapping("/medical-record/{medicalRecordId}/filter")
     public ResponseEntity<ApiResponse<List<TimelineDTO>>> getTimelineByDateRange(
             @PathVariable Long medicalRecordId,
@@ -70,7 +66,6 @@ public class TimelineController {
         }
     }
 
-    // Get all timeline events for a user
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<List<TimelineDTO>>> getTimelineByUser(@PathVariable Long userId) {
         try {

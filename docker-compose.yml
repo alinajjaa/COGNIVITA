@@ -10,7 +10,7 @@ services:
       MYSQL_USER: alzheimer_user
       MYSQL_PASSWORD: alzheimer_pass
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./setup_database.sql:/docker-entrypoint-initdb.d/setup_database.sql

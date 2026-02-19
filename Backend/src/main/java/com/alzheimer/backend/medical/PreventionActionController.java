@@ -1,10 +1,6 @@
 package com.alzheimer.backend.medical;
 
 import com.alzheimer.backend.dto.ApiResponse;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +14,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/prevention-actions")
-@CrossOrigin(origins = "http://localhost:4200")
 public class PreventionActionController {
 
     private final PreventionActionRepository preventionActionRepository;
@@ -33,7 +28,6 @@ public class PreventionActionController {
         this.timelineService = timelineService;
     }
 
-    // Get all prevention actions for a medical record (paginated)
     @GetMapping("/medical-record/{medicalRecordId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getActionsByMedicalRecord(
             @PathVariable Long medicalRecordId,
@@ -65,7 +59,6 @@ public class PreventionActionController {
         }
     }
 
-    // Get actions by status
     @GetMapping("/medical-record/{medicalRecordId}/status/{status}")
     public ResponseEntity<ApiResponse<List<PreventionActionDTO>>> getActionsByStatus(
             @PathVariable Long medicalRecordId, @PathVariable String status) {
@@ -81,7 +74,6 @@ public class PreventionActionController {
         }
     }
 
-    // Get single action by ID
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PreventionActionDTO>> getActionById(@PathVariable Long id) {
         return preventionActionRepository.findById(id)
@@ -90,7 +82,6 @@ public class PreventionActionController {
                         .body(ApiResponse.error("Action not found", "No action with ID: " + id)));
     }
 
-    // Create new prevention action
     @PostMapping
     public ResponseEntity<ApiResponse<PreventionActionDTO>> createAction(
             @RequestBody Map<String, Object> request) {
@@ -128,7 +119,6 @@ public class PreventionActionController {
         }
     }
 
-    // Update prevention action
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PreventionActionDTO>> updateAction(
             @PathVariable Long id, @RequestBody Map<String, Object> request) {
@@ -159,7 +149,6 @@ public class PreventionActionController {
         }
     }
 
-    // Delete prevention action
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteAction(@PathVariable Long id) {
         try {
@@ -175,7 +164,6 @@ public class PreventionActionController {
         }
     }
 
-    // Mark action as completed
     @PatchMapping("/{id}/complete")
     public ResponseEntity<ApiResponse<PreventionActionDTO>> completeAction(@PathVariable Long id) {
         return preventionActionRepository.findById(id)
@@ -189,7 +177,6 @@ public class PreventionActionController {
                         .body(ApiResponse.error("Action not found", "No action with ID: " + id)));
     }
 
-    // Get prevention action stats
     @GetMapping("/medical-record/{medicalRecordId}/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getActionStats(@PathVariable Long medicalRecordId) {
         try {
@@ -213,7 +200,6 @@ public class PreventionActionController {
         }
     }
 
-    // Filter by date range
     @GetMapping("/medical-record/{medicalRecordId}/filter")
     public ResponseEntity<ApiResponse<List<PreventionActionDTO>>> filterByDateRange(
             @PathVariable Long medicalRecordId,
