@@ -1,0 +1,449 @@
+<div class="medical-records-page">
+  <div class="brain-background"><app-brain3d></app-brain3d></div>
+
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-icon">🏥</div>
+      <h1>Medical Records</h1>
+      <p>Patient Clinical Documentation & Risk Monitoring</p>
+      <button class="btn-primary" (click)="openCreateForm()">＋ New Record</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><span class="stat-number">{{ totalElements }}</span><span class="stat-label">Total Records</span></div>
+      <div class="stat-item"><span class="stat-number">{{ userGroups.length }}</span><span class="stat-label">Patients</span></div>
+      <div class="stat-item"><span class="stat-number">{{ getHighRiskCount() }}</span><span class="stat-label">High Risk</span></div>
+      <div class="stat-item"><span class="stat-number">{{ getAverageScore() }}</span><span class="stat-label">Avg. Score</span></div>
+    </div>
+  </section>
+
+  <!-- FILTERS -->
+  <section class="filter-section" *ngIf="!loading">
+    <div class="filter-bar">
+      <div class="filter-group search-group">
+        <label>Search Patient</label>
+        <input type="text" [(ngModel)]="searchName" placeholder="Name or email..." class="search-input" (input)="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <label>Risk Level</label>
+        <select [(ngModel)]="filterRiskLevel" (change)="applyFilters()">
+          <option value="">All</option>
+          <option value="LOW">🟢 Low</option><option value="MEDIUM">🟡 Medium</option>
+          <option value="HIGH">🟠 High</option><option value="CRITICAL">🔴 Critical</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Gender</label>
+        <select [(ngModel)]="filterGender" (change)="applyFilters()">
+          <option value="">All</option><option value="Male">Male</option><option value="Female">Female</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Family History</label>
+        <select [(ngModel)]="filterFamilyHistory" (change)="applyFilters()">
+          <option value="">All</option><option value="Yes">Yes</option><option value="No">No</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Sort By</label>
+        <select [(ngModel)]="sortBy" (change)="applyFilters()">
+          <option value="createdAt">Date</option>
+          <option value="age">Age</option>
+          <option value="riskScore">Risk Score</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Order</label>
+        <select [(ngModel)]="sortDirection" (change)="applyFilters()">
+          <option value="DESC">↓ Desc</option><option value="ASC">↑ Asc</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>View</label>
+        <div class="view-toggle">
+          <button [class.active]="viewMode === 'grouped'" (click)="viewMode = 'grouped'">👥 By Patient</button>
+          <button [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">📋 All Records</button>
+        </div>
+      </div>
+      <button class="btn-clear-filters" (click)="clearFilters()">✕ Clear</button>
+    </div>
+    <div class="results-info">{{ totalElements }} records · {{ userGroups.length }} patients</div>
+  </section>
+
+  <div *ngIf="loading" class="loading-container"><div class="pulse-ring"></div><p>Loading...</p></div>
+  <div *ngIf="error && !loading" class="error-container"><h3>⚠️ {{ error }}</h3><button class="btn-retry" (click)="loadRecords()">Retry</button></div>
+
+  <!-- ══════════════════════════════════════
+       GROUPED VIEW (by patient / user)
+       ══════════════════════════════════════ -->
+  <div *ngIf="!loading && viewMode === 'grouped'" class="records-section">
+    <div *ngIf="filteredGroups.length === 0 && !error" class="empty-container">
+      <div class="empty-illustration">🏥</div>
+      <h3>No Records Found</h3>
+      <button class="btn-primary" (click)="openCreateForm()">＋ Create First Record</button>
+    </div>
+
+    <div *ngFor="let group of filteredGroups" class="user-group">
+      <!-- Group Header -->
+      <div class="group-header" (click)="toggleGroup(group)">
+        <div class="group-avatar">{{ getInitials(group.userName) }}</div>
+        <div class="group-info">
+          <h3 class="group-name">{{ group.userName }}</h3>
+          <span class="group-email">{{ group.userEmail }}</span>
+        </div>
+        <div class="group-badges">
+          <span class="group-count">{{ group.records.length }} record{{ group.records.length > 1 ? 's' : '' }}</span>
+          <span class="group-risk" [ngClass]="getRiskClass(getHighestRiskInGroup(group))">
+            {{ getRiskEmoji(getHighestRiskInGroup(group)) }} {{ getHighestRiskInGroup(group) }}
+          </span>
+          <span class="group-avg-score">Avg {{ getAvgScoreInGroup(group) }}/100</span>
+        </div>
+        <div class="group-actions" (click)="$event.stopPropagation()">
+          <button class="btn-add-record" (click)="openCreateFormForUser(group.userId, group.userName)">
+            ＋ Add Record
+          </button>
+        </div>
+        <span class="group-toggle">{{ group.expanded ? '▲' : '▼' }}</span>
+      </div>
+
+      <!-- Group Records -->
+      <div class="group-records" *ngIf="group.expanded">
+        <article *ngFor="let record of group.records" class="fiche-medicale" (click)="viewRecord(record)">
+          <div class="fiche-header">
+            <div class="record-num">#{{ record.id }}</div>
+            <div class="risk-badge" [ngClass]="getRiskClass(record.riskLevel)">
+              {{ getRiskEmoji(record.riskLevel) }} {{ record.riskLevel || 'N/A' }}
+            </div>
+          </div>
+
+          <div class="score-bar-container">
+            <div class="score-label">
+              <span>Risk Score</span>
+              <span class="score-value" [ngClass]="getRiskClass(record.riskLevel)">{{ record.riskScore | number:'1.0-1' }}/100</span>
+            </div>
+            <div class="score-track"><div class="score-fill" [ngClass]="getRiskClass(record.riskLevel)" [style.width]="getRiskScoreWidth(record.riskScore)"></div></div>
+          </div>
+
+          <div class="info-row">
+            <span>👤 {{ record.age }} yrs · {{ record.gender }}</span>
+            <span>🏫 {{ record.educationLevel || 'N/A' }}</span>
+          </div>
+          <div class="info-row" [ngClass]="record.familyHistory === 'Yes' ? 'warn' : ''">
+            <span>🧬 Family History: {{ record.familyHistory }}</span>
+          </div>
+          <div class="fiche-footer">
+            <span class="date-stamp">{{ formatDate(record.createdAt) }}</span>
+            <button class="btn-dashboard">📊 Dashboard →</button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       LIST VIEW (all records, flat)
+       ══════════════════════════════════════ -->
+  <div *ngIf="!loading && viewMode === 'list'" class="records-section">
+    <div *ngIf="allRecords.length === 0 && !error" class="empty-container">
+      <div class="empty-illustration">🏥</div>
+      <h3>No Records Found</h3>
+      <button class="btn-primary" (click)="openCreateForm()">＋ Create First Record</button>
+    </div>
+    <div class="fiche-grid">
+      <article *ngFor="let record of allRecords" class="fiche-medicale" (click)="viewRecord(record)">
+        <div class="fiche-header">
+          <div class="patient-photo"><span class="initials">{{ getInitials(record.userName) }}</span></div>
+          <div class="patient-identity">
+            <h3 class="patient-name">{{ record.userName }}</h3>
+            <span class="patient-id">{{ record.userEmail }}</span>
+          </div>
+          <div class="risk-badge" [ngClass]="getRiskClass(record.riskLevel)">
+            {{ getRiskEmoji(record.riskLevel) }} {{ record.riskLevel || 'N/A' }}
+          </div>
+        </div>
+        <div class="score-bar-container">
+          <div class="score-label"><span>Risk Score</span><span class="score-value" [ngClass]="getRiskClass(record.riskLevel)">{{ record.riskScore | number:'1.0-1' }}/100</span></div>
+          <div class="score-track"><div class="score-fill" [ngClass]="getRiskClass(record.riskLevel)" [style.width]="getRiskScoreWidth(record.riskScore)"></div></div>
+        </div>
+        <div class="info-row"><span>👤 {{ record.age }} yrs · {{ record.gender }}</span><span>🏫 {{ record.educationLevel || 'N/A' }}</span></div>
+        <div class="fiche-footer"><span class="date-stamp">{{ formatDate(record.createdAt) }}</span><button class="btn-dashboard">📊 Dashboard →</button></div>
+      </article>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="page-btn" [disabled]="currentPage === 0" (click)="changePage(currentPage - 1)">‹</button>
+      <button class="page-btn" *ngFor="let p of pageNumbers" [class.active]="p === currentPage" (click)="changePage(p)">{{ p + 1 }}</button>
+      <button class="page-btn" [disabled]="currentPage === totalPages - 1" (click)="changePage(currentPage + 1)">›</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PATIENT DASHBOARD MODAL
+       ══════════════════════════════════════════════════════════ -->
+  <div *ngIf="selectedRecord && !showForm" class="modal-backdrop" (click)="closeDetails()">
+    <div class="dashboard-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeDetails()">✕</button>
+
+      <div class="dashboard-header">
+        <div class="dashboard-avatar" [ngClass]="selectedRecord.gender?.toLowerCase()">{{ getInitials(selectedRecord.userName) }}</div>
+        <div class="dashboard-patient-info">
+          <h2>{{ selectedRecord.userName }}</h2>
+          <p>{{ selectedRecord.userEmail }}</p>
+          <p>{{ selectedRecord.age }} yrs · {{ selectedRecord.gender }} · {{ selectedRecord.educationLevel || 'Education N/A' }}</p>
+        </div>
+        <div class="dashboard-risk-badge" [ngClass]="getRiskClass(selectedRecord.riskLevel)">
+          <div class="risk-score-circle">
+            <span class="risk-score-number">{{ selectedRecord.riskScore | number:'1.0-0' }}</span>
+            <span class="risk-score-label">/100</span>
+          </div>
+          <div class="risk-level-text">{{ getRiskEmoji(selectedRecord.riskLevel) }} {{ selectedRecord.riskLevel }}</div>
+        </div>
+        <div class="dashboard-actions-top">
+          <button class="btn-edit" (click)="openEditForm(selectedRecord)">✏️ Edit</button>
+          <button class="btn-delete" (click)="deleteRecord(selectedRecord.id)">🗑️ Delete</button>
+        </div>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">📋 Overview</button>
+        <button class="tab-btn" [class.active]="activeTab === 'risk'" (click)="setTab('risk')">⚠️ Risk Factors</button>
+        <button class="tab-btn" [class.active]="activeTab === 'prevention'" (click)="setTab('prevention')">✅ Prevention</button>
+        <button class="tab-btn" [class.active]="activeTab === 'timeline'" (click)="setTab('timeline')">🕐 Timeline</button>
+        <button class="tab-btn" [class.active]="activeTab === 'stats'" (click)="setTab('stats')">📊 Stats</button>
+      </div>
+
+      <div class="tab-content">
+
+        <!-- TAB: OVERVIEW -->
+        <div *ngIf="activeTab === 'overview'" class="tab-pane">
+          <div class="overview-grid">
+            <div class="overview-card">
+              <h4>🩺 Clinical Information</h4>
+              <div class="data-rows">
+                <div class="data-row"><label>Family History</label><span [ngClass]="selectedRecord.familyHistory === 'Yes' ? 'text-warning' : 'text-success'">{{ selectedRecord.familyHistory === 'Yes' ? '⚠️ Yes' : '✓ No' }}</span></div>
+                <div class="data-row"><label>Education</label><span>{{ selectedRecord.educationLevel || 'N/A' }}</span></div>
+                <div class="data-row"><label>Risk Factor Notes</label><span>{{ selectedRecord.riskFactors || 'None documented' }}</span></div>
+                <div class="data-row"><label>Current Symptoms</label><span>{{ selectedRecord.currentSymptoms || 'None reported' }}</span></div>
+                <div class="data-row"><label>Diagnosis Notes</label><span>{{ selectedRecord.diagnosisNotes || 'N/A' }}</span></div>
+                <div class="data-row"><label>Score Calculated</label><span>{{ formatDateTime(selectedRecord.lastRiskCalculation) }}</span></div>
+              </div>
+            </div>
+
+            <div class="overview-card risk-card" [ngClass]="getRiskClass(selectedRecord.riskLevel)">
+              <h4>📊 Risk Assessment</h4>
+              <div class="big-score">
+                <div class="score-circle" [ngClass]="getRiskClass(selectedRecord.riskLevel)">
+                  <span>{{ selectedRecord.riskScore | number:'1.0-1' }}</span><small>/100</small>
+                </div>
+                <div class="score-level">{{ getRiskEmoji(selectedRecord.riskLevel) }} {{ selectedRecord.riskLevel }} RISK</div>
+              </div>
+              <div class="score-track big"><div class="score-fill" [ngClass]="getRiskClass(selectedRecord.riskLevel)" [style.width]="getRiskScoreWidth(selectedRecord.riskScore)"></div></div>
+            </div>
+
+            <div class="overview-card recs-card" *ngIf="selectedRecord.recommendations?.length">
+              <h4>💡 Personalized Recommendations</h4>
+              <ul class="recs-list">
+                <li *ngFor="let rec of selectedRecord.recommendations" class="rec-item">{{ rec }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: RISK FACTORS -->
+        <div *ngIf="activeTab === 'risk'" class="tab-pane">
+          <app-risk-factors [medicalRecordId]="selectedRecord.id"></app-risk-factors>
+        </div>
+
+        <!-- TAB: PREVENTION ACTIONS -->
+        <div *ngIf="activeTab === 'prevention'" class="tab-pane">
+          <div class="section-toolbar">
+            <h4>✅ Prevention Actions</h4>
+            <button class="btn-add" (click)="openActionForm()">＋ Add Action</button>
+          </div>
+          <div *ngIf="showActionForm" class="inline-form">
+            <h5>New Prevention Action</h5>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Action Type *</label>
+                <select [(ngModel)]="actionFormData.actionType">
+                  <option value="">Select</option>
+                  <option>Cognitive Training</option><option>Physical Exercise</option>
+                  <option>Diet Modification</option><option>Medical Follow-up</option>
+                  <option>Social Activity</option><option>Sleep Improvement</option>
+                  <option>Stress Management</option><option>Medication</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Frequency</label>
+                <select [(ngModel)]="actionFormData.frequency">
+                  <option value="">Select</option>
+                  <option>Daily</option><option>Weekly</option><option>Monthly</option><option>One-time</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Date</label>
+                <input type="datetime-local" [(ngModel)]="actionFormData.actionDate">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea [(ngModel)]="actionFormData.description" rows="2" placeholder="Details..."></textarea>
+            </div>
+            <div class="form-actions-inline">
+              <button class="btn-cancel" (click)="closeActionForm()">Cancel</button>
+              <button class="btn-submit" (click)="submitAction()">Save</button>
+            </div>
+          </div>
+
+          <div *ngIf="patientActions.length === 0 && !showActionForm" class="empty-tab"><p>No prevention actions yet.</p></div>
+          <div class="actions-list">
+            <div *ngFor="let action of patientActions" class="action-card">
+              <div class="action-header">
+                <span class="action-type">{{ action.actionType }}</span>
+                <span class="action-status" [ngClass]="getStatusClass(action.status)">{{ action.status }}</span>
+              </div>
+              <p *ngIf="action.description" class="action-desc">{{ action.description }}</p>
+              <div class="action-meta">
+                <span>📅 {{ formatDate(action.actionDate) }}</span>
+                <span *ngIf="action.frequency">🔁 {{ action.frequency }}</span>
+              </div>
+              <div class="action-btns">
+                <button *ngIf="action.status === 'PENDING'" class="btn-complete" (click)="completeAction(action.id)">✓ Complete</button>
+                <button class="btn-del" (click)="deleteAction(action.id)">🗑️</button>
+              </div>
+            </div>
+          </div>
+          <div class="mini-pagination" *ngIf="patientActionTotalPages > 1">
+            <button [disabled]="patientActionPage === 0" (click)="loadPatientActions(selectedRecord.id, patientActionPage - 1)">‹</button>
+            <span>{{ patientActionPage + 1 }} / {{ patientActionTotalPages }}</span>
+            <button [disabled]="patientActionPage >= patientActionTotalPages - 1" (click)="loadPatientActions(selectedRecord.id, patientActionPage + 1)">›</button>
+          </div>
+        </div>
+
+        <!-- TAB: TIMELINE -->
+        <div *ngIf="activeTab === 'timeline'" class="tab-pane">
+          <div class="section-toolbar">
+            <h4>🕐 Medical Timeline</h4>
+            <select [(ngModel)]="timelineFilter" (change)="filterTimeline(timelineFilter)">
+              <option value="">All Events</option>
+              <option value="RISK_FACTOR_ADDED">Risk Factor Added</option>
+              <option value="RISK_FACTOR_UPDATED">Risk Factor Updated</option>
+              <option value="PREVENTION_ACTION_ADDED">Prevention Added</option>
+              <option value="MEDICAL_RECORD_UPDATED">Record Updated</option>
+            </select>
+          </div>
+          <div *ngIf="patientTimeline.length === 0" class="empty-tab"><p>No timeline events yet. Changes will appear here automatically.</p></div>
+          <div class="timeline-container">
+            <div *ngFor="let event of patientTimeline" class="timeline-entry">
+              <div class="timeline-icon">{{ getEventIcon(event.eventType) }}</div>
+              <div class="timeline-body">
+                <div class="timeline-event-type">{{ event.eventType?.replace('_', ' ') }}</div>
+                <div class="timeline-desc">{{ event.description }}</div>
+                <div class="timeline-time">{{ formatDateTime(event.eventDate) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: STATS -->
+        <div *ngIf="activeTab === 'stats'" class="tab-pane">
+          <!-- Charts Section -->
+          <app-medical-charts [medicalRecordId]="selectedRecord.id"></app-medical-charts>
+          
+          <!-- Stats Grid -->
+          <div class="stats-grid" style="margin-top: 30px;">
+            <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-info"><div class="stat-big">{{ selectedRecord.riskScore | number:'1.0-1' }}</div><div class="stat-title">Risk Score</div><div class="stat-sub" [ngClass]="getRiskClass(selectedRecord.riskLevel)">{{ selectedRecord.riskLevel }}</div></div></div>
+            <div class="stat-card"><div class="stat-icon">🕐</div><div class="stat-info"><div class="stat-big">{{ patientTimeline.length }}</div><div class="stat-title">Timeline Events</div><div class="stat-sub">Total history</div></div></div>
+            <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><div class="stat-big">{{ patientActions.length }}</div><div class="stat-title">Prevention Actions</div><div class="stat-sub">{{ getCompletedCount() }} completed</div></div></div>
+            <div class="stat-card"><div class="stat-icon">💡</div><div class="stat-info"><div class="stat-big">{{ selectedRecord.recommendations?.length || 0 }}</div><div class="stat-title">Recommendations</div><div class="stat-sub">Personalized</div></div></div>
+          </div>
+          <div class="recs-summary" *ngIf="selectedRecord.recommendations?.length">
+            <h4>💡 Active Recommendations</h4>
+            <div class="recs-chips"><span *ngFor="let rec of selectedRecord.recommendations" class="rec-chip">{{ rec }}</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE/EDIT FORM MODAL -->
+  <div *ngIf="showForm" class="modal-backdrop" (click)="closeForm()">
+    <div class="form-modal" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeForm()">✕</button>
+      <div class="form-header">
+        <h2>{{ isEditing ? '✏️ Edit Medical Record' : '＋ New Medical Record' }}</h2>
+        <p>{{ isEditing ? 'Update patient information' : 'Create a new patient clinical file' }}</p>
+      </div>
+      <form class="medical-form">
+        <div class="form-section">
+          <h5>Patient Information</h5>
+          <div class="form-row">
+            <div class="form-group">
+              <label>User ID <span class="required">*</span></label>
+              <input type="number" [(ngModel)]="formData.userId" name="userId" [disabled]="isEditing" placeholder="User ID">
+            </div>
+            <div class="form-group">
+              <label>Age <span class="required">*</span></label>
+              <input type="number" [(ngModel)]="formData.age" name="age" min="0" max="150" placeholder="Years">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Gender <span class="required">*</span></label>
+              <select [(ngModel)]="formData.gender" name="gender">
+                <option value="">Select gender</option>
+                <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Education Level</label>
+              <select [(ngModel)]="formData.educationLevel" name="educationLevel">
+                <option value="">Select education</option>
+                <option>No Formal Education</option><option>Primary School</option><option>High School</option>
+                <option>Bachelor Degree</option><option>Master Degree</option><option>Doctorate</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h5>Medical History</h5>
+          <div class="form-group">
+            <label>Family History of Alzheimer's</label>
+            <div class="radio-buttons">
+              <label class="radio-btn" [class.selected]="formData.familyHistory === 'Yes'">
+                <input type="radio" [(ngModel)]="formData.familyHistory" name="familyHistory" value="Yes"><span>⚠️ Yes</span>
+              </label>
+              <label class="radio-btn" [class.selected]="formData.familyHistory === 'No'">
+                <input type="radio" [(ngModel)]="formData.familyHistory" name="familyHistory" value="No"><span>✓ No</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Risk Factor Notes</label>
+            <textarea [(ngModel)]="formData.riskFactors" name="riskFactors" rows="2" placeholder="General notes (detailed risk factors managed in Risk Factors tab)..."></textarea>
+          </div>
+        </div>
+        <div class="form-section">
+          <h5>Clinical Assessment</h5>
+          <div class="form-group">
+            <label>Current Symptoms</label>
+            <textarea [(ngModel)]="formData.currentSymptoms" name="currentSymptoms" rows="2"
+                      placeholder="e.g., memory loss, confusion, difficulty with familiar tasks, personality changes..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Diagnosis Notes</label>
+            <textarea [(ngModel)]="formData.diagnosisNotes" name="diagnosisNotes" rows="3" placeholder="Clinical observations, treatment plan..."></textarea>
+          </div>
+        </div>
+        <div class="info-note">🤖 Risk score is <strong>automatically calculated</strong> based on age, family history, education, symptoms, and linked risk factors.</div>
+        <div *ngIf="error" class="form-error">⚠️ {{ error }}</div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="closeForm()">Cancel</button>
+          <button type="button" class="btn-submit" (click)="submitForm()">{{ isEditing ? '💾 Update' : '💾 Save Record' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

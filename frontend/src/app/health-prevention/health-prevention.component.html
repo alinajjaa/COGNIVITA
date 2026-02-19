@@ -1,0 +1,480 @@
+<!-- health-prevention.component.html -->
+<div class="hp-container">
+
+  <!-- Header -->
+  <div class="hp-header">
+    <div class="header-content">
+      <div class="header-icon">🛡️</div>
+      <div>
+        <h1 class="header-title">Health &amp; Prevention</h1>
+        <p class="header-subtitle">Evidence-based Alzheimer's Prevention Management</p>
+      </div>
+    </div>
+    <div class="header-badge">Microservice</div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="successMessage" class="alert alert-success">✅ {{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert alert-error">❌ {{ errorMessage }}</div>
+
+  <!-- No Profile CTA -->
+  <div *ngIf="!healthProfile && !isLoading" class="no-profile-card">
+    <div class="no-profile-icon">🌱</div>
+    <h2>Create Your Health Prevention Profile</h2>
+    <p>Start your personalized Alzheimer's prevention journey with evidence-based recommendations
+       tailored to your lifestyle.</p>
+    <button class="btn-primary" (click)="createNewProfile()">
+      + Create Health Profile
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <span>Loading...</span>
+  </div>
+
+  <!-- Tabs -->
+  <div *ngIf="healthProfile" class="tabs-container">
+    <div class="tabs">
+      <button class="tab" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">
+        📊 Dashboard
+      </button>
+      <button class="tab" [class.active]="activeTab === 'profile'" (click)="setTab('profile')">
+        👤 Profile
+      </button>
+      <button class="tab" [class.active]="activeTab === 'recommendations'" (click)="setTab('recommendations')">
+        💡 Recommendations
+        <span *ngIf="recommendations.length" class="badge">{{ recommendations.length }}</span>
+      </button>
+      <button class="tab" [class.active]="activeTab === 'activities'" (click)="setTab('activities')">
+        🏃 Activities
+        <span *ngIf="activities.length" class="badge">{{ activities.length }}</span>
+      </button>
+    </div>
+
+    <!-- ──────────── DASHBOARD TAB ──────────── -->
+    <div *ngIf="activeTab === 'dashboard' && dashboard" class="tab-content">
+
+      <!-- Wellness Score Ring -->
+      <div class="wellness-ring-section">
+        <div class="ring-container">
+          <svg viewBox="0 0 120 120" class="ring-svg">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
+            <circle cx="60" cy="60" r="54" fill="none"
+                    [attr.stroke]="getWellnessColor(dashboard.wellnessScore)"
+                    stroke-width="12" stroke-linecap="round"
+                    [attr.stroke-dasharray]="2 * 3.14159 * 54"
+                    [attr.stroke-dashoffset]="getCircleOffset(dashboard.wellnessScore)"
+                    transform="rotate(-90 60 60)"
+                    style="transition: stroke-dashoffset 1s ease"/>
+            <text x="60" y="52" text-anchor="middle" class="ring-score"
+                  [attr.fill]="getWellnessColor(dashboard.wellnessScore)">
+              {{ dashboard.wellnessScore | number:'1.0-0' }}
+            </text>
+            <text x="60" y="68" text-anchor="middle" class="ring-label">Wellness</text>
+            <text x="60" y="82" text-anchor="middle" class="ring-sublabel"
+                  [attr.fill]="getWellnessColor(dashboard.wellnessScore)">
+              {{ dashboard.wellnessLevel }}
+            </text>
+          </svg>
+        </div>
+        <div class="wellness-info">
+          <div class="wellness-description">
+            <h3>Your Wellness Score</h3>
+            <p>Based on lifestyle factors including physical activity, diet, sleep quality,
+               stress management, and social engagement.</p>
+            <p class="last-assessed">Last assessed: {{ formatDate(dashboard.lastAssessmentDate) }}</p>
+          </div>
+          <button class="btn-primary" (click)="editProfile()">Update Lifestyle Data</button>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card cyan">
+          <div class="stat-number">{{ dashboard.totalRecommendations }}</div>
+          <div class="stat-label">Total Recommendations</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-number">{{ dashboard.activeRecommendations }}</div>
+          <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-number">{{ dashboard.completedRecommendations }}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-number">{{ dashboard.activitiesThisWeek }}</div>
+          <div class="stat-label">Activities This Week</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-number">{{ dashboard.totalActivityMinutes }}</div>
+          <div class="stat-label">Total Activity Minutes</div>
+        </div>
+        <div class="stat-card teal">
+          <div class="stat-number">{{ dashboard.totalActivities }}</div>
+          <div class="stat-label">Total Activities Logged</div>
+        </div>
+      </div>
+
+      <!-- Activity Breakdown -->
+      <div class="breakdown-section">
+        <div class="breakdown-card" *ngIf="dashboard.activitiesByType | keyvalue as types">
+          <h3>🏃 Activities by Type</h3>
+          <div *ngIf="types.length === 0" class="empty-state-small">No activities logged yet</div>
+          <div *ngFor="let item of types" class="breakdown-item">
+            <span class="breakdown-key">{{ formatEnum(item.key) }}</span>
+            <div class="breakdown-bar-wrap">
+              <div class="breakdown-bar" [style.width.%]="(item.value / dashboard.totalActivities) * 100"></div>
+            </div>
+            <span class="breakdown-val">{{ item.value }}</span>
+          </div>
+        </div>
+
+        <div class="breakdown-card" *ngIf="dashboard.recommendationsByCategory | keyvalue as cats">
+          <h3>💡 Recommendations by Category</h3>
+          <div *ngIf="cats.length === 0" class="empty-state-small">No recommendations yet</div>
+          <div *ngFor="let item of cats" class="breakdown-item">
+            <span class="breakdown-key">{{ formatEnum(item.key) }}</span>
+            <div class="breakdown-bar-wrap">
+              <div class="breakdown-bar cyan" [style.width.%]="(item.value / dashboard.totalRecommendations) * 100"></div>
+            </div>
+            <span class="breakdown-val">{{ item.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────── PROFILE TAB ──────────── -->
+    <div *ngIf="activeTab === 'profile'" class="tab-content">
+
+      <!-- View mode -->
+      <div *ngIf="!showProfileForm && healthProfile" class="profile-view">
+        <div class="profile-grid">
+          <div class="profile-item">
+            <label>Physical Activity</label>
+            <span>{{ formatEnum(healthProfile.physicalActivityLevel || '') }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Sleep Hours/Night</label>
+            <span>{{ healthProfile.sleepHoursPerNight ?? 'N/A' }}h</span>
+          </div>
+          <div class="profile-item">
+            <label>Diet Quality</label>
+            <span>{{ formatEnum(healthProfile.dietQuality || '') }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Stress Level</label>
+            <span>{{ formatEnum(healthProfile.stressLevel || '') }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Smoking</label>
+            <span [class]="healthProfile.smokingStatus ? 'val-bad' : 'val-good'">
+              {{ healthProfile.smokingStatus ? 'Yes' : 'No' }}
+            </span>
+          </div>
+          <div class="profile-item">
+            <label>Alcohol Consumption</label>
+            <span>{{ formatEnum(healthProfile.alcoholConsumption || '') }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Social Engagement</label>
+            <span>{{ formatEnum(healthProfile.socialEngagementLevel || '') }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Cognitive Training</label>
+            <span>{{ healthProfile.cognitiveTrainingFrequency || 'N/A' }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Wellness Score</label>
+            <span class="score-highlight">{{ healthProfile.wellnessScore | number:'1.0-1' }}</span>
+          </div>
+          <div class="profile-item">
+            <label>Last Assessment</label>
+            <span>{{ formatDate(healthProfile.lastAssessmentDate) }}</span>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-primary" (click)="editProfile()">✏️ Edit Profile</button>
+          <button class="btn-secondary" (click)="generateRecommendations()">💡 Generate Recommendations</button>
+        </div>
+      </div>
+
+      <!-- Edit/Create Form -->
+      <div *ngIf="showProfileForm" class="profile-form">
+        <h3>{{ isEditMode ? 'Update Health Profile' : 'Create Health Profile' }}</h3>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Physical Activity Level</label>
+            <select [(ngModel)]="profileForm.physicalActivityLevel">
+              <option *ngFor="let opt of activityLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Sleep Hours Per Night</label>
+            <input type="number" [(ngModel)]="profileForm.sleepHoursPerNight"
+                   min="3" max="12" step="0.5" placeholder="e.g. 7.5"/>
+          </div>
+
+          <div class="form-group">
+            <label>Diet Quality</label>
+            <select [(ngModel)]="profileForm.dietQuality">
+              <option *ngFor="let opt of dietQualities" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Stress Level</label>
+            <select [(ngModel)]="profileForm.stressLevel">
+              <option *ngFor="let opt of stressLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Alcohol Consumption</label>
+            <select [(ngModel)]="profileForm.alcoholConsumption">
+              <option *ngFor="let opt of alcoholOptions" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Social Engagement</label>
+            <select [(ngModel)]="profileForm.socialEngagementLevel">
+              <option *ngFor="let opt of engagementLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Cognitive Training Frequency</label>
+            <select [(ngModel)]="profileForm.cognitiveTrainingFrequency">
+              <option *ngFor="let opt of trainingFrequencies" [value]="opt">{{ opt }}</option>
+            </select>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="profileForm.smokingStatus"/>
+              Currently Smoking
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Notes</label>
+          <textarea [(ngModel)]="profileForm.notes" rows="3" placeholder="Additional notes..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" (click)="saveProfile()" [disabled]="isLoading">
+            {{ isLoading ? 'Saving...' : (isEditMode ? '💾 Update Profile' : '✅ Create Profile') }}
+          </button>
+          <button class="btn-ghost" (click)="showProfileForm = false">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────── RECOMMENDATIONS TAB ──────────── -->
+    <div *ngIf="activeTab === 'recommendations'" class="tab-content">
+      <div class="section-header">
+        <h2>Evidence-Based Recommendations</h2>
+        <button class="btn-primary" (click)="generateRecommendations()" [disabled]="isLoading">
+          ✨ {{ isLoading ? 'Generating...' : 'Auto-Generate' }}
+        </button>
+      </div>
+
+      <div *ngIf="recommendations.length === 0" class="empty-state">
+        <div class="empty-icon">💡</div>
+        <p>No recommendations yet. Click "Auto-Generate" to get personalized recommendations
+           based on your health profile.</p>
+      </div>
+
+      <div class="rec-list">
+        <div *ngFor="let rec of recommendations" class="rec-card">
+          <div class="rec-header">
+            <div class="rec-meta">
+              <span class="rec-category">{{ formatEnum(rec.category) }}</span>
+              <span class="rec-priority" [style.background]="getPriorityColor(rec.priority || '')">
+                {{ rec.priority }}
+              </span>
+              <span class="rec-status" [style.color]="getStatusColor(rec.status || '')">
+                ● {{ formatEnum(rec.status || '') }}
+              </span>
+              <span *ngIf="rec.evidenceBased" class="evidence-badge">🔬 Evidence-Based</span>
+            </div>
+            <div class="rec-actions">
+              <button *ngIf="rec.status !== 'COMPLETED'" class="btn-small green"
+                      (click)="completeRecommendation(rec.id!)">✓ Done</button>
+              <button class="btn-small red" (click)="deleteRecommendation(rec.id!)">🗑</button>
+            </div>
+          </div>
+          <h4 class="rec-title">{{ rec.title }}</h4>
+          <p class="rec-desc">{{ rec.description }}</p>
+          <div class="rec-footer">
+            <span>Added: {{ formatDate(rec.createdAt) }}</span>
+            <span *ngIf="rec.completedDate">Completed: {{ formatDate(rec.completedDate) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ──────────── ACTIVITIES TAB ──────────── -->
+    <div *ngIf="activeTab === 'activities'" class="tab-content">
+      <div class="section-header">
+        <h2>Wellness Activities</h2>
+        <button class="btn-primary" (click)="showActivityForm = !showActivityForm">
+          {{ showActivityForm ? 'Cancel' : '+ Log Activity' }}
+        </button>
+      </div>
+
+      <!-- Log Activity Form -->
+      <div *ngIf="showActivityForm" class="activity-form">
+        <h3>Log New Activity</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Activity Name *</label>
+            <input type="text" [(ngModel)]="activityForm.activityName" placeholder="e.g. Morning Walk"/>
+          </div>
+          <div class="form-group">
+            <label>Activity Type</label>
+            <select [(ngModel)]="activityForm.activityType">
+              <option *ngFor="let opt of activityTypes" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date & Time *</label>
+            <input type="datetime-local" [(ngModel)]="activityForm.activityDate"/>
+          </div>
+          <div class="form-group">
+            <label>Duration (minutes)</label>
+            <input type="number" [(ngModel)]="activityForm.durationMinutes" min="1" max="600"/>
+          </div>
+          <div class="form-group">
+            <label>Intensity Level</label>
+            <select [(ngModel)]="activityForm.intensityLevel">
+              <option *ngFor="let opt of intensityLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Calories Burned</label>
+            <input type="number" [(ngModel)]="activityForm.caloriesBurned" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Mood Before</label>
+            <input type="text" [(ngModel)]="activityForm.moodBefore" placeholder="e.g. Tired"/>
+          </div>
+          <div class="form-group">
+            <label>Mood After</label>
+            <input type="text" [(ngModel)]="activityForm.moodAfter" placeholder="e.g. Energized"/>
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <label>Notes</label>
+          <textarea [(ngModel)]="activityForm.notes" rows="2" placeholder="Any notes..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" (click)="logActivity()" [disabled]="isLoading || !activityForm.activityName">
+            {{ isLoading ? 'Logging...' : '✅ Log Activity' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Activity List -->
+      <div *ngIf="activities.length === 0 && !showActivityForm" class="empty-state">
+        <div class="empty-icon">🏃</div>
+        <p>No activities logged yet. Start tracking your wellness activities!</p>
+      </div>
+
+      <div class="activity-list">
+        <div *ngFor="let act of activities" class="activity-card">
+          <div class="act-icon">
+            <span>{{ act.activityType === 'WALKING' ? '🚶' :
+                      act.activityType === 'SWIMMING' ? '🏊' :
+                      act.activityType === 'YOGA' ? '🧘' :
+                      act.activityType === 'MEDITATION' ? '🧠' :
+                      act.activityType === 'COGNITIVE' ? '💭' :
+                      act.activityType === 'SOCIAL' ? '👥' : '🏃' }}</span>
+          </div>
+          <div class="act-info">
+            <h4>{{ act.activityName }}</h4>
+            <div class="act-meta">
+              <span>{{ formatEnum(act.activityType || '') }}</span>
+              <span *ngIf="act.durationMinutes">⏱ {{ act.durationMinutes }}min</span>
+              <span *ngIf="act.intensityLevel">{{ formatEnum(act.intensityLevel) }}</span>
+              <span *ngIf="act.caloriesBurned">🔥 {{ act.caloriesBurned }} cal</span>
+            </div>
+            <div class="act-moods" *ngIf="act.moodBefore || act.moodAfter">
+              <span *ngIf="act.moodBefore">Before: {{ act.moodBefore }}</span>
+              <span *ngIf="act.moodAfter"> → After: {{ act.moodAfter }}</span>
+            </div>
+            <div class="act-date">{{ formatDate(act.activityDate) }}</div>
+          </div>
+          <button class="btn-icon-delete" (click)="deleteActivity(act.id!)">🗑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile form shown outside tabs when no profile exists -->
+  <div *ngIf="!healthProfile && showProfileForm" class="tab-content" style="margin-top: 20px;">
+    <div class="profile-form">
+      <h3>Create Your Health Prevention Profile</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Physical Activity Level</label>
+          <select [(ngModel)]="profileForm.physicalActivityLevel">
+            <option *ngFor="let opt of activityLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sleep Hours Per Night</label>
+          <input type="number" [(ngModel)]="profileForm.sleepHoursPerNight" min="3" max="12" step="0.5"/>
+        </div>
+        <div class="form-group">
+          <label>Diet Quality</label>
+          <select [(ngModel)]="profileForm.dietQuality">
+            <option *ngFor="let opt of dietQualities" [value]="opt">{{ formatEnum(opt) }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Stress Level</label>
+          <select [(ngModel)]="profileForm.stressLevel">
+            <option *ngFor="let opt of stressLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Alcohol Consumption</label>
+          <select [(ngModel)]="profileForm.alcoholConsumption">
+            <option *ngFor="let opt of alcoholOptions" [value]="opt">{{ formatEnum(opt) }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Social Engagement</label>
+          <select [(ngModel)]="profileForm.socialEngagementLevel">
+            <option *ngFor="let opt of engagementLevels" [value]="opt">{{ formatEnum(opt) }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cognitive Training Frequency</label>
+          <select [(ngModel)]="profileForm.cognitiveTrainingFrequency">
+            <option *ngFor="let opt of trainingFrequencies" [value]="opt">{{ opt }}</option>
+          </select>
+        </div>
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="profileForm.smokingStatus"/>
+            Currently Smoking
+          </label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="saveProfile()" [disabled]="isLoading">
+          {{ isLoading ? 'Creating...' : '✅ Create Profile' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
